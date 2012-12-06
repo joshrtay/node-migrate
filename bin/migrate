@@ -6,7 +6,8 @@
 
 var migrate = require('../')
   , join = require('path').join
-  , fs = require('fs');
+  , fs = require('fs')
+  , uuid = require('node-uuid');
 
 /**
  * Arguments.
@@ -207,7 +208,17 @@ function create(name) {
  */
 
 function performMigration(direction, migrationName) {
-  migrate('migrations/.migrate');
+  try {
+    var title = fs.readFileSync('migrations/id').toString();
+  } catch(e) {
+    if (e.code === 'ENOENT') {
+      var title = uuid.v4();
+      fs.writeFileSync('migrations/id', title);
+    } else
+      throw e;
+  }
+  
+  migrate(title);
   migrations().forEach(function(path){
     var mod = require(process.cwd() + '/' + path);
     migrate(path, mod.up, mod.down);
